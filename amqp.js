@@ -223,7 +223,7 @@ function AMQPParser (version, type) {
 // If there's an error in the parser, call the onError handler or throw
 AMQPParser.prototype.throwError = function (error) {
   if(this.onError) this.onError(error);
-  else throw new Error(error);
+  else console.error(error);//throw new Error(error);
 };
 
 // Everytime data is recieved on the socket, pass it to this function for
@@ -1603,6 +1603,15 @@ Queue.prototype.subscribeRaw = function (/* options, messageListener */) {
     self.consumerTagOptions[consumerTag]['state'] = 'open';
   });
 };
+
+Queue.prototype.setPrefetchCount = function(preFetchCount) {
+  this.connection._sendMethod(this.channel, methods.basicQos,
+    { reserved1: 0
+    , prefetchSize: 0
+    , prefetchCount: preFetchCount
+    , global: false
+    });
+}
 
 Queue.prototype.unsubscribe = function(consumerTag) {
   var self = this;
