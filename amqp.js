@@ -223,7 +223,7 @@ function AMQPParser (version, type) {
 // If there's an error in the parser, call the onError handler or throw
 AMQPParser.prototype.throwError = function (error) {
   if(this.onError) this.onError(error);
-  else console.error(error);//throw new Error(error);
+  else throw new Error(error);
 };
 
 // Everytime data is recieved on the socket, pass it to this function for
@@ -1434,6 +1434,7 @@ function Message (queue, args) {
   this.exchange    = args.exchange;
   this.routingKey  = args.routingKey;
   this.consumerTag = args.consumerTag;
+  this.consumed    = false
 
   for (var i=0, l=msgProperties.length; i<l; i++) {
       if (args[msgProperties[i].name]) {
@@ -1448,20 +1449,29 @@ util.inherits(Message, events.EventEmitter);
 // Set first arg to 'true' to acknowledge this and all previous messages
 // received on this queue.
 Message.prototype.acknowledge = function (all) {
-  this.queue.connection._sendMethod(this.queue.channel, methods.basicAck,
+  if(this.consumed == false){
+    this.consumed = true;
+    this.queue.connection._sendMethod(this.queue.channel, methods.basicAck,
       { reserved1: 0
       , deliveryTag: this.deliveryTag
       , multiple: all ? true : false
       });
+  }
+
 };
 
 // Reject an incoming message.
 // Set first arg to 'true' to requeue the message.
 Message.prototype.reject = function (requeue){
-  this.queue.connection._sendMethod(this.queue.channel, methods.basicReject,
-      { deliveryTag: this.deliveryTag
-      , requeue: requeue ? true : false
-      });
+  if(this.consumed == false){
+    this.consumed = true;
+    this.queue.connection._sendMethod(this.queue.channel, methods.basicReject,
+        { deliveryTag: this.deliveryTag
+        , requeue: requeue ? true : false
+        });
+  }else{
+    console.error("ERROR: Tried to Reject a message that has already been consumed.")
+  }
 }
 
 // This class is not exposed to the user. Queue and Exchange are subclasses
