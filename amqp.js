@@ -8,7 +8,8 @@ var events = require('events'),
     URL = require('url'),
     AMQPTypes = require('./constants').AMQPTypes,
     Indicators = require('./constants').Indicators,
-    FrameType = require('./constants').FrameType;
+    FrameType = require('./constants').FrameType,
+    os = require('os');
     
 function mixin () {
   // copy reference to target object
@@ -1090,7 +1091,7 @@ Connection.prototype._onMethod = function (channel, method, args) {
       this._sendMethod(0, methods.connectionStartOk,
           { clientProperties:
             { version: '0.0.1'
-            , platform: 'node-' + process.version
+            , platform: os.hostname() + '-node-' + process.version
             , product: 'node-amqp'
             }
           , mechanism: 'AMQPLAIN'
