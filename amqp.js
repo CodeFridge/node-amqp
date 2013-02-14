@@ -25,7 +25,7 @@ function mixin () {
 
   // Handle case when target is a string or something (possible in deep copy)
   if ( typeof target !== "object" && !(typeof target === 'function') )
-    target = {};
+    target = {};       
 
   // mixin process itself if only one argument is passed
   if ( length == i ) {
@@ -1488,6 +1488,10 @@ function Channel (connection, channel) {
 }
 util.inherits(Channel, events.EventEmitter);
 
+Channel.prototype.closeOK = function() {
+    this.connection._sendMethod(this.channel, methods.channelCloseOk, {reserved1: ""});
+}
+
 Channel.prototype.reconnect = function () {
   this.connection._sendMethod(this.channel, methods.channelOpen, {reserved1: ""});
 };
@@ -1547,13 +1551,19 @@ Channel.prototype._onChannelMethod = function(channel, method, args) {
 }
 
 Channel.prototype.close = function() { 
-  this.state = 'closing';
+  if (this.state == 'open'){
+    this.state = 'closing';
     this.connection._sendMethod(this.channel, methods.channelClose,
-                                {'replyText': 'Goodbye from node',
-                                 'replyCode': 200,
-                                 'classId': 0,
-                                 'methodId': 0});
+                                  {'replyText': 'Goodbye from node',
+                                   'replyCode': 200,
+                                   'classId': 0,
+                                   'methodId': 0});
+  }else{
+    delete this.connection.channels[this.channel]
+  }
+
 }
+  
 
 function Queue (connection, channel, name, options, callback) {
   Channel.call(this, connection, channel);
@@ -1964,6 +1974,7 @@ Queue.prototype._onMethod = function (channel, method, args) {
 
     case methods.channelClose:
       this.state = "closed";
+      this.closeOK();
       this.connection.queueClosed(this.name);
       var e = new Error(args.replyText);
       e.code = args.replyCode;
@@ -2108,6 +2119,7 @@ Exchange.prototype._onMethod = function (channel, method, args) {
 
     case methods.channelClose:
       this.state = "closed";
+      this.closeOK();
       this.connection.exchangeClosed(this.name);
       var e = new Error(args.replyText);
       e.code = args.replyCode;
@@ -2207,11 +2219,13 @@ Exchange.prototype.publish = function (routingKey, data, options, callback) {
     self._unAcked[self._sequence] = task
     self._sequence++
 
-    if(callback != null){
-      var errorCallback = function(){task.removeAllListeners();callback(true)};
-      var exchange = this;
-      task.once('ack',   function(){exchange.removeListener('error', errorCallback); task.removeAllListeners();callback(false)}); 
-      this.once('error', errorCallback);
+    if (callback != null) {
+      var errorCallback = function(){task.removeAllListeners(); self.hasErrorListener=false; callback(true)};
+      task.once('ack',   function(){self.removeListener('error', errorCallback); self.hasErrorListener=false; task.removeAllListeners(); callback(false)});
+      if (!this.hasErrorListener) {
+        this.once('error', errorCallback);
+        this.hasErrorListener = true;
+      }
     }
   }
 
