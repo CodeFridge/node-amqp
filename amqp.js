@@ -798,6 +798,13 @@ function Connection (connectionArgs, options, readyCallback) {
 
   this.setOptions(connectionArgs);
   this.setImplOptions(options);
+  this.hosti = 0;
+
+  if(Array.isArray(this.options.host) == true){
+    this.hostsLength = this.options.host.length;
+  }
+
+  this.reconnectAttemptOnThisHost = 0;
 
   if (typeof readyCallback === 'function') {
     this._readyCallback = readyCallback;
@@ -870,6 +877,16 @@ function Connection (connectionArgs, options, readyCallback) {
         }
 
         setTimeout(function () {
+
+          if(self.hostsLength != null){
+            self.reconnectAttemptOnThisHost++
+            if(self.reconnectAttemptOnThisHost > 3){
+              self.reconnectAttemptOnThisHost = 0
+              // randomly choose a new host BUT not our current host.
+              self.hosti += Math.ceil((self.hostsLength - 1) * Math.random()); 
+            }
+          }
+
           // Set to false, so that if we fail in the reconnect attempt, we can
           // schedule another one.
           self.connectionAttemptScheduled = false;
@@ -1015,6 +1032,12 @@ exports.createConnection = function (connectionArgs, options, readyCallback) {
   return c;
 };
 
+Connection.prototype.end = function () {
+  this.implOptions.reconnect = false;
+  net.Socket.prototype.end.call(this);
+};
+
+
 Connection.prototype.setOptions = function (options) {
   var o  = {};
   var urlo = (options && options.url) ? urlOptions(options.url) : {};
@@ -1043,12 +1066,10 @@ Connection.prototype.connect = function () {
   var connectToHost = this.options.host;
 
   if(Array.isArray(this.options.host) == true){
-    if(this.hosti == null){
-      this.hosti = Math.random()*this.options.host.length >> 0;
-    }else{
-      this.hosti = (this.hosti+1) % this.options.host.length;
+    if(this.hosti >= this.hostsLength){
+      this.hosti = this.hosti % this.hostsLength;
     }
-    connectToHost = this.options.host[this.hosti]
+    connectToHost = this.options.host[this.hosti];
   }
 
   // Connect socket
