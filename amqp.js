@@ -1163,8 +1163,8 @@ Connection.prototype._onMethod = function (channel, method, args) {
         console.log('Unhandled connection error: ' + args.replyText);
       }
       if (this.implOptions.reconnect) {
-        console.log('Attempting reconnect')
-        this.reconnect(); 
+        console.log('Attempting reconnect code connection close error ' + e.code);
+        this.emit('error'); 
       }
       this.destroy(e);
       break;
