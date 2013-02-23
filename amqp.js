@@ -1059,7 +1059,7 @@ Connection.prototype.reconnect = function () {
     this.channels[channel].state = 'closed';
   }
   // Terminate socket activity
-  this.end();
+  net.Socket.prototype.end.call(this);
   this.connect();
 };
 
