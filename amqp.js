@@ -1034,11 +1034,6 @@ exports.createConnection = function (connectionArgs, options, readyCallback) {
   return c;
 };
 
-Connection.prototype.end = function () {
-  this.implOptions.reconnect = false;
-  net.Socket.prototype.end.call(this);
-};
-
 
 Connection.prototype.setOptions = function (options) {
   var o  = {};
@@ -1059,7 +1054,7 @@ Connection.prototype.reconnect = function () {
     this.channels[channel].state = 'closed';
   }
   // Terminate socket activity
-  net.Socket.prototype.end.call(this);
+  this.end()
   this.connect();
 };
 
