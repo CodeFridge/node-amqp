@@ -879,8 +879,10 @@ function Connection (connectionArgs, options, readyCallback) {
         setTimeout(function () {
 
           if(self.hostsLength != null){
+            console.error("bumping host?")
             self.reconnectAttemptOnThisHost++
-            if(self.reconnectAttemptOnThisHost > 3){
+            if(self.reconnectAttemptOnThisHost >= 3){
+              console.error("bumping actually?")
               self.reconnectAttemptOnThisHost = 0
               // randomly choose a new host BUT not our current host.
               self.hosti += Math.ceil((self.hostsLength - 1) * Math.random()); 
@@ -1070,6 +1072,7 @@ Connection.prototype.connect = function () {
       this.hosti = this.hosti % this.hostsLength;
     }
     connectToHost = this.options.host[this.hosti];
+    console.error("Connecting to " + connectToHost);
   }
 
   // Connect socket
@@ -1158,6 +1161,10 @@ Connection.prototype._onMethod = function (channel, method, args) {
       e.code = args.replyCode;
       if (!this.listeners('close').length) {
         console.log('Unhandled connection error: ' + args.replyText);
+      }
+      if (this.implOptions.reconnect) {
+        console.log('Attempting reconnect')
+        this.reconnect();
       }
       this.destroy(e);
       break;
