@@ -1164,7 +1164,7 @@ Connection.prototype._onMethod = function (channel, method, args) {
       }
       if (this.implOptions.reconnect) {
         console.log('Attempting reconnect')
-        this.reconnect();
+        this.reconnect(); 
       }
       this.destroy(e);
       break;
