@@ -1452,6 +1452,7 @@ function Message (queue, args) {
   events.EventEmitter.call(this);
 
   this.queue = queue;
+  this.channelUUID = this.queue.channelUUID;
 
   this.deliveryTag = args.deliveryTag;
   this.redelivered = args.redelivered;
@@ -1473,7 +1474,7 @@ util.inherits(Message, events.EventEmitter);
 // Set first arg to 'true' to acknowledge this and all previous messages
 // received on this queue.
 Message.prototype.acknowledge = function (all) {
-  if(this.consumed == false){
+  if(this.consumed == false && this.queue.channelUUID == this.channelUUID){
     this.consumed = true;
     this.queue.connection._sendMethod(this.queue.channel, methods.basicAck,
       { reserved1: 0
@@ -1487,7 +1488,7 @@ Message.prototype.acknowledge = function (all) {
 // Reject an incoming message.
 // Set first arg to 'true' to requeue the message.
 Message.prototype.reject = function (requeue){
-  if(this.consumed == false){
+  if(this.consumed == false && this.queue.channelUUID == this.channelUUID){
     this.consumed = true;
     this.queue.connection._sendMethod(this.queue.channel, methods.basicReject,
         { deliveryTag: this.deliveryTag
@@ -1502,7 +1503,7 @@ Message.prototype.reject = function (requeue){
 // of Channel. This just provides a task queue.
 function Channel (connection, channel) {
   events.EventEmitter.call(this);
-
+  this.channelUUID = 0
   this.channel = channel;
   this.connection = connection;
   this._tasks = [];
@@ -1516,6 +1517,7 @@ Channel.prototype.closeOK = function() {
 }
 
 Channel.prototype.reconnect = function () {
+  this.channelUUID++
   this.connection._sendMethod(this.channel, methods.channelOpen, {reserved1: ""});
 };
 
