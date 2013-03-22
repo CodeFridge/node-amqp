@@ -802,6 +802,11 @@ function Connection (connectionArgs, options, readyCallback) {
 
   if(Array.isArray(this.options.host) == true){
     this.hostsLength = this.options.host.length;
+
+    if(this.options.hostRandom){
+      this.hosti = Math.floor(Math.random() * this.hostsLength);
+    }
+
   }
 
   this.reconnectAttemptOnThisHost = 0;
@@ -879,10 +884,9 @@ function Connection (connectionArgs, options, readyCallback) {
         setTimeout(function () {
 
           if(self.hostsLength != null){
-            console.error("bumping host?")
             self.reconnectAttemptOnThisHost++
             if(self.reconnectAttemptOnThisHost >= 3){
-              console.error("bumping actually?")
+              console.error("Switching hosts.")
               self.reconnectAttemptOnThisHost = 0
               // randomly choose a new host BUT not our current host.
               self.hosti += Math.ceil((self.hostsLength - 1) * Math.random()); 
