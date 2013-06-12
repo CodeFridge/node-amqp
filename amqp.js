@@ -1062,6 +1062,20 @@ Connection.prototype.reconnect = function () {
   this.connect();
 };
 
+Connection.prototype.end = function (){
+  if (this._outboundHeartbeatTimer !== null) {
+    clearTimeout(this._outboundHeartbeatTimer);
+    this._outboundHeartbeatTimer = null;
+  }
+
+  if (this._inboundHeartbeatTimer !== null) {
+    clearTimeout(this._inboundHeartbeatTimer);
+    this._inboundHeartbeatTimer = null;
+  }
+  
+  net.Socket.prototype.end.call(this);
+}
+
 Connection.prototype.connect = function () {
   // If you pass a array of hosts, lets choose a random host, or then next one.
   var connectToHost = this.options.host;
