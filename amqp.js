@@ -1062,7 +1062,7 @@ Connection.prototype.reconnect = function () {
   this.connect();
 };
 
-Connection.prototype.end = function (){
+Connection.prototype.disconnect = function (){
   if (this._outboundHeartbeatTimer !== null) {
     clearTimeout(this._outboundHeartbeatTimer);
     this._outboundHeartbeatTimer = null;
