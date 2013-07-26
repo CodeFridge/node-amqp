@@ -939,6 +939,7 @@ function Connection (connectionArgs, options, readyCallback) {
     };
 
     parser.onHeartBeat = function () {
+      self._inboundHeartbeatTimerReset();
       self.emit("heartbeat");
       debug("heartbeat");
     };
@@ -957,7 +958,6 @@ function Connection (connectionArgs, options, readyCallback) {
     if(parser != null){
       parser.execute(data);
     }
-    self._inboundHeartbeatTimerReset();
   });
 
   self.addListener('error', function () {
