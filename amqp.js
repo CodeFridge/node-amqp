@@ -917,6 +917,7 @@ function Connection (connectionArgs, options, readyCallback) {
     parser = new AMQPParser('0-9-1', 'client');
 
     parser.onMethod = function (channel, method, args) {
+      self._inboundHeartbeatTimerReset();
       self._onMethod(channel, method, args);
     };
 
@@ -979,6 +980,7 @@ function Connection (connectionArgs, options, readyCallback) {
 
     // Restart the heartbeat to the server
     self._outboundHeartbeatTimerReset();
+    self._inboundHeartbeatTimerReset();
   })
 }
 util.inherits(Connection, net.Stream);
